@@ -45,10 +45,11 @@
 -dontwarn org.slf4j.Logger
 -dontwarn org.slf4j.LoggerFactory
 
-# Angus Mail contains optional desktop and GraalVM integrations that are not used on Android.
--dontwarn java.awt.Image
--dontwarn java.awt.Toolkit
--dontwarn org.graalvm.nativeimage.hosted.Feature
+# Android JavaMail uses provider and authentication classes by name. Keeping the mail stack also
+# avoids unsafe R8 optimizations around its STARTTLS socket upgrade on older Android providers.
+-keep class javax.mail.** { *; }
+-keep class javax.activation.** { *; }
+-keep class com.sun.mail.** { *; }
 
 -keepclasseswithmembers class * {
     @com.squareup.moshi.* <methods>;

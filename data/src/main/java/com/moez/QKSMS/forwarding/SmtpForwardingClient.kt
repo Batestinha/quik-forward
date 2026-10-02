@@ -1,25 +1,26 @@
 /* Copyright (C) 2026, GPL-3.0-or-later */
 package dev.octoshrimpy.quik.forwarding
 
-import jakarta.activation.DataHandler
-import jakarta.activation.FileDataSource
-import jakarta.mail.AuthenticationFailedException
-import jakarta.mail.Message
-import jakarta.mail.MessagingException
-import jakarta.mail.Session
-import jakarta.mail.URLName
-import jakarta.mail.internet.AddressException
-import jakarta.mail.internet.InternetAddress
-import jakarta.mail.internet.MimeBodyPart
-import jakarta.mail.internet.MimeMessage
-import jakarta.mail.internet.MimeMultipart
-import org.eclipse.angus.mail.smtp.SMTPTransport
+import android.os.Build
+import com.sun.mail.smtp.SMTPTransport
 import java.io.File
 import java.util.Date
 import java.util.IdentityHashMap
 import java.util.Properties
 import javax.inject.Inject
 import javax.inject.Singleton
+import javax.activation.DataHandler
+import javax.activation.FileDataSource
+import javax.mail.AuthenticationFailedException
+import javax.mail.Message
+import javax.mail.MessagingException
+import javax.mail.Session
+import javax.mail.URLName
+import javax.mail.internet.AddressException
+import javax.mail.internet.InternetAddress
+import javax.mail.internet.MimeBodyPart
+import javax.mail.internet.MimeMessage
+import javax.mail.internet.MimeMultipart
 
 class SmtpFailure(message: String, val retryable: Boolean, cause: Throwable? = null) :
     Exception(message, cause)
@@ -103,20 +104,19 @@ class SmtpForwardingClient @Inject constructor() {
         }
     }
 
-    internal fun smtpProperties(config: ForwardingConfig) = Properties().apply {
+    internal fun smtpProperties(
+        config: ForwardingConfig,
+        sdkInt: Int = Build.VERSION.SDK_INT
+    ) = Properties().apply {
         setProperty("mail.smtp.host", config.smtpHost.trim())
         setProperty("mail.smtp.port", config.smtpPort.toString())
         setProperty("mail.smtp.auth", config.smtpUsername.isNotBlank().toString())
         setProperty("mail.smtp.connectiontimeout", "20000")
         setProperty("mail.smtp.timeout", "20000")
         setProperty("mail.smtp.writetimeout", "20000")
-        // Android 10's TLS provider does not reliably support the JDK-specific "LDAPS"
-        // endpoint-identification algorithm selected by Angus when this setting is true.
-        // Keep normal certificate-chain validation and have Angus verify the certificate's
-        // DNS names after the handshake instead.
-        setProperty("mail.smtp.ssl.checkserveridentity", "false")
-        setProperty("mail.smtp.ssl.hostnameverifier.class", "MailHostnameVerifier")
-        setProperty("mail.smtp.ssl.protocols", "TLSv1.3 TLSv1.2")
+        setProperty("mail.smtp.ssl.checkserveridentity", "true")
+        // TLS 1.3 is available from Android 10; older supported releases use TLS 1.2.
+        setProperty("mail.smtp.ssl.protocols", if (sdkInt >= 29) "TLSv1.3 TLSv1.2" else "TLSv1.2")
         when (config.smtpSecurity) {
             SmtpSecurity.STARTTLS -> {
                 setProperty("mail.smtp.starttls.enable", "true")
@@ -129,7 +129,7 @@ class SmtpForwardingClient @Inject constructor() {
     private fun withConnectedTransport(
         config: ForwardingConfig,
         password: String,
-        block: (jakarta.mail.Transport) -> Unit
+        block: (javax.mail.Transport) -> Unit
     ) {
         val transport = createTransport(config)
         try {
@@ -159,8 +159,8 @@ class SmtpForwardingClient @Inject constructor() {
 
     /**
      * Android does not reliably expose META-INF mail-provider descriptors through its classloader.
-     * Constructing the Angus SMTP transport directly avoids a misleading NoSuchProviderException
-     * whose entire message is just "smtp" on affected release builds.
+     * Constructing the Android JavaMail SMTP transport directly avoids a misleading
+     * NoSuchProviderException whose entire message is just "smtp" on affected release builds.
      */
     internal fun createTransport(config: ForwardingConfig): SMTPTransport {
         val session = Session.getInstance(smtpProperties(config))

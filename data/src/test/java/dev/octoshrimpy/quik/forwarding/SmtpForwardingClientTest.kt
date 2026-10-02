@@ -1,12 +1,12 @@
 /* Copyright (C) 2026, GPL-3.0-or-later */
 package dev.octoshrimpy.quik.forwarding
 
-import jakarta.mail.Message
-import jakarta.mail.MessagingException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import javax.mail.Message
+import javax.mail.MessagingException
 
 class SmtpForwardingClientTest {
     private val client = SmtpForwardingClient()
@@ -66,23 +66,28 @@ class SmtpForwardingClientTest {
     }
 
     @Test
-    fun usesAndroidCompatibleHostnameVerification() {
+    fun requiresCertificateHostnameVerification() {
         val properties = client.smtpProperties(
             config.copy(
                 smtpHost = "smtp.gmail.com",
                 smtpPort = 587,
                 smtpSecurity = SmtpSecurity.STARTTLS
-            )
+            ),
+            sdkInt = 29
         )
 
-        assertEquals("false", properties.getProperty("mail.smtp.ssl.checkserveridentity"))
-        assertEquals(
-            "MailHostnameVerifier",
-            properties.getProperty("mail.smtp.ssl.hostnameverifier.class")
-        )
+        assertEquals("true", properties.getProperty("mail.smtp.ssl.checkserveridentity"))
+        assertNull(properties.getProperty("mail.smtp.ssl.hostnameverifier.class"))
         assertEquals("TLSv1.3 TLSv1.2", properties.getProperty("mail.smtp.ssl.protocols"))
         assertEquals("true", properties.getProperty("mail.smtp.starttls.enable"))
         assertEquals("true", properties.getProperty("mail.smtp.starttls.required"))
+    }
+
+    @Test
+    fun usesTls12OnlyBeforeAndroid10() {
+        val properties = client.smtpProperties(config, sdkInt = 28)
+
+        assertEquals("TLSv1.2", properties.getProperty("mail.smtp.ssl.protocols"))
     }
 
     @Test
