@@ -4,6 +4,7 @@ package dev.octoshrimpy.quik.forwarding
 import jakarta.mail.Message
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SmtpForwardingClientTest {
@@ -43,5 +44,23 @@ class SmtpForwardingClientTest {
             message.getRecipients(Message.RecipientType.TO).map { it.toString() }
         )
         assertNull(message.getRecipients(Message.RecipientType.BCC))
+    }
+
+    @Test
+    fun createsSmtpTransportWithoutProviderDiscovery() {
+        val transport = client.createTransport(
+            config.copy(
+                smtpHost = "smtp.gmail.com",
+                smtpPort = 587,
+                smtpSecurity = SmtpSecurity.STARTTLS,
+                smtpUsername = "sender@example.com"
+            )
+        )
+
+        assertEquals("smtp", transport.urlName.protocol)
+        assertEquals("smtp.gmail.com", transport.urlName.host)
+        assertEquals(587, transport.urlName.port)
+        assertTrue(transport.startTLS)
+        assertTrue(transport.requireStartTLS)
     }
 }

@@ -7,11 +7,13 @@ import jakarta.mail.AuthenticationFailedException
 import jakarta.mail.Message
 import jakarta.mail.MessagingException
 import jakarta.mail.Session
+import jakarta.mail.URLName
 import jakarta.mail.internet.AddressException
 import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeBodyPart
 import jakarta.mail.internet.MimeMessage
 import jakarta.mail.internet.MimeMultipart
+import org.eclipse.angus.mail.smtp.SMTPTransport
 import java.io.File
 import java.util.Date
 import java.util.Properties
@@ -123,7 +125,7 @@ class SmtpForwardingClient @Inject constructor() {
         password: String,
         block: (jakarta.mail.Transport) -> Unit
     ) {
-        val transport = Session.getInstance(properties(config)).getTransport("smtp")
+        val transport = createTransport(config)
         try {
             if (config.smtpUsername.isBlank()) {
                 transport.connect(config.smtpHost.trim(), config.smtpPort, null, null)
@@ -147,5 +149,23 @@ class SmtpForwardingClient @Inject constructor() {
                 // Nothing useful can be done while closing a failed connection.
             }
         }
+    }
+
+    /**
+     * Android does not reliably expose META-INF mail-provider descriptors through its classloader.
+     * Constructing the Angus SMTP transport directly avoids a misleading NoSuchProviderException
+     * whose entire message is just "smtp" on affected release builds.
+     */
+    internal fun createTransport(config: ForwardingConfig): SMTPTransport {
+        val session = Session.getInstance(properties(config))
+        val url = URLName(
+            "smtp",
+            config.smtpHost.trim(),
+            config.smtpPort,
+            null,
+            config.smtpUsername.trim().takeIf(String::isNotBlank),
+            null
+        )
+        return SMTPTransport(session, url)
     }
 }

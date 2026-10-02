@@ -162,7 +162,11 @@
     <string name="forwarding_bcc_recipients">Send forwarding recipients using BCC</string>
     <string name="forwarding_bcc_recipients_summary">When disabled, destination addresses appear in the visible To header.</string>
     <string name="forwarding_save">Save</string>
+    <string name="forwarding_saved">Forwarding settings saved</string>
+    <string name="forwarding_saved_not_verified">Settings saved; forwarding remains off until the SMTP test succeeds</string>
     <string name="forwarding_test">Test connection</string>
+    <string name="forwarding_test_failed">SMTP test failed: %1$s</string>
+    <string name="forwarding_test_failed_unknown">Unknown error</string>
     <string name="forwarding_verified">SMTP settings verified</string>
     <string name="forwarding_not_verified">Test these SMTP settings before enabling forwarding</string>
     <string name="compose_scheduled_for">Scheduled time:</string>

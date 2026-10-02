@@ -183,9 +183,9 @@ class ForwardingSettingsActivity : QkThemedActivity() {
         loading = false
         updateVerificationStatus(saved)
         val message = if (requested.enabled && !saved.enabled) {
-            getString(R.string.forwarding_not_verified)
+            getString(R.string.forwarding_saved_not_verified)
         } else {
-            getString(R.string.forwarding_save)
+            getString(R.string.forwarding_saved)
         }
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
@@ -212,7 +212,11 @@ class ForwardingSettingsActivity : QkThemedActivity() {
                     loading = false
                     status.setText(R.string.forwarding_verified)
                 } else {
-                    status.text = result.exceptionOrNull()?.message ?: "SMTP test failed"
+                    val detail = result.exceptionOrNull()?.message
+                        ?.takeIf(String::isNotBlank)
+                        ?: getString(R.string.forwarding_test_failed_unknown)
+                    status.text = getString(R.string.forwarding_test_failed, detail)
+                    Toast.makeText(this, status.text, Toast.LENGTH_LONG).show()
                 }
             }
         }, "smtp-settings-test").start()
