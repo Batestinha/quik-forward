@@ -7,6 +7,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import javax.mail.Message
 import javax.mail.MessagingException
+import javax.mail.internet.InternetAddress
 
 class SmtpForwardingClientTest {
     private val client = SmtpForwardingClient()
@@ -45,6 +46,32 @@ class SmtpForwardingClientTest {
             message.getRecipients(Message.RecipientType.TO).map { it.toString() }
         )
         assertNull(message.getRecipients(Message.RecipientType.BCC))
+    }
+
+    @Test
+    fun usesSavedContactNameWhileRetainingAddress() {
+        val message = client.createMessage(
+            config,
+            job.copy(participantLabels = listOf("Alice Example"))
+        )
+
+        assertEquals("QUIK Forward: Incoming SMS Alice Example", message.subject)
+        val from = message.from.single() as InternetAddress
+        assertEquals("Alice Example", from.personal)
+        assertEquals("sender@example.com", from.address)
+        val content = message.content.toString()
+        assertTrue(content.contains("From: Alice Example\n"))
+        assertTrue(content.contains("Address: +351000000000\n"))
+        assertTrue(content.endsWith("\nTest"))
+    }
+
+    @Test
+    fun fallsBackToAddressWhenNoContactNameExists() {
+        val message = client.createMessage(config, job)
+
+        assertEquals("QUIK Forward: Incoming SMS +351000000000", message.subject)
+        assertNull((message.from.single() as InternetAddress).personal)
+        assertTrue(message.content.toString().contains("From: +351000000000"))
     }
 
     @Test

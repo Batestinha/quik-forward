@@ -44,13 +44,21 @@ class SmtpForwardingClient @Inject constructor() {
 
     internal fun createMessage(config: ForwardingConfig, job: ForwardingJob): MimeMessage =
         MimeMessage(Session.getInstance(smtpProperties(config))).apply {
-            setFrom(InternetAddress(config.fromAddress.trim(), true))
+            val participantLabels = job.participantLabels
+                .takeIf { it.size == job.participants.size }
+                ?: job.participants
+            val participantsText = participantLabels.joinToString()
+            val from = InternetAddress(config.fromAddress.trim(), true)
+            if (participantLabels != job.participants) {
+                from.setPersonal(participantsText, Charsets.UTF_8.name())
+            }
+            setFrom(from)
             setRecipients(
                 if (config.bccRecipients) Message.RecipientType.BCC else Message.RecipientType.TO,
                 config.recipients.flatMap { InternetAddress.parse(it, true).toList() }.toTypedArray()
             )
             subject = "QUIK Forward: ${job.direction.name.lowercase().replaceFirstChar(Char::uppercase)} " +
-                "${job.kind.name} ${job.participants.joinToString()}"
+                "${job.kind.name} $participantsText"
             sentDate = Date(job.timestamp)
             setHeader("Message-ID", "<quik-forward-${job.id}@local>")
             setHeader("X-QUIK-Forward-Direction", job.direction.name)
@@ -59,7 +67,13 @@ class SmtpForwardingClient @Inject constructor() {
             val text = buildString {
                 appendLine("Direction: ${job.direction.name.lowercase()}")
                 appendLine("Type: ${job.kind.name}")
-                appendLine("Address: ${job.participants.joinToString()}")
+                appendLine(
+                    "${if (job.direction == ForwardingDirection.INCOMING) "From" else "To"}: " +
+                        participantsText
+                )
+                if (participantLabels != job.participants) {
+                    appendLine("Address: ${job.participants.joinToString()}")
+                }
                 appendLine("Date: ${Date(job.timestamp)}")
                 if (job.subject.isNotBlank()) appendLine("Subject: ${job.subject}")
                 if (job.omittedAttachments.isNotEmpty()) {

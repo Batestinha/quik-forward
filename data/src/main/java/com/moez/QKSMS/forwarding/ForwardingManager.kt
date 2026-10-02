@@ -26,7 +26,7 @@ class ForwardingManager @Inject constructor(
     moshi: Moshi,
     private val messageRepository: MessageRepository,
     private val conversationRepository: ConversationRepository,
-    phoneNumberUtils: PhoneNumberUtils,
+    private val phoneNumberUtils: PhoneNumberUtils,
     private val secretStore: ForwardingSecretStore,
     private val smtpClient: SmtpForwardingClient
 ) {
@@ -118,6 +118,7 @@ class ForwardingManager @Inject constructor(
         if (!isTypeEnabled(config, direction, kind)) return null
 
         val participants = participants(message, direction)
+        val participantLabels = participantLabels(message, participants)
         val subject = message.getCleansedSubject()
         val body = message.getText(withSubject = false)
         val searchableText = listOf(subject, body).filter(String::isNotBlank).joinToString("\n")
@@ -141,6 +142,7 @@ class ForwardingManager @Inject constructor(
             kind = kind,
             timestamp = message.date.takeIf { it > 0 } ?: System.currentTimeMillis(),
             participants = participants,
+            participantLabels = participantLabels,
             subject = subject,
             body = body,
             omittedAttachments = omitted,
@@ -202,6 +204,14 @@ class ForwardingManager @Inject constructor(
             ?.filter(String::isNotBlank)
             .orEmpty()
         return conversationAddresses.ifEmpty { listOf(message.address).filter(String::isNotBlank) }
+    }
+
+    private fun participantLabels(message: Message, participants: List<String>): List<String> {
+        val savedContacts = conversationRepository.getConversation(message.threadId)
+            ?.recipients
+            .orEmpty()
+            .map { recipient -> recipient.address to recipient.contact?.name }
+        return resolveParticipantLabels(participants, savedContacts, phoneNumberUtils::compare)
     }
 
     private fun captureAttachments(
@@ -293,4 +303,19 @@ class ForwardingManager @Inject constructor(
     }
 
     private class AttachmentLimitExceeded : IOException()
+}
+
+internal fun resolveParticipantLabels(
+    participants: List<String>,
+    savedContacts: List<Pair<String, String?>>,
+    addressesEqual: (String, String) -> Boolean
+): List<String> = participants.map { address ->
+    savedContacts.firstOrNull { (savedAddress) ->
+        addressesEqual(savedAddress, address) ||
+            savedAddress.trim().equals(address.trim(), ignoreCase = true)
+    }?.second
+        ?.replace(Regex("[\\r\\n]+"), " ")
+        ?.trim()
+        ?.takeIf(String::isNotBlank)
+        ?: address
 }
