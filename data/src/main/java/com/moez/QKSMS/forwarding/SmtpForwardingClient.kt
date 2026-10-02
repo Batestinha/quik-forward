@@ -16,6 +16,7 @@ import jakarta.mail.internet.MimeMultipart
 import org.eclipse.angus.mail.smtp.SMTPTransport
 import java.io.File
 import java.util.Date
+import java.util.IdentityHashMap
 import java.util.Properties
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -41,7 +42,7 @@ class SmtpForwardingClient @Inject constructor() {
     }
 
     internal fun createMessage(config: ForwardingConfig, job: ForwardingJob): MimeMessage =
-        MimeMessage(Session.getInstance(properties(config))).apply {
+        MimeMessage(Session.getInstance(smtpProperties(config))).apply {
             setFrom(InternetAddress(config.fromAddress.trim(), true))
             setRecipients(
                 if (config.bccRecipients) Message.RecipientType.BCC else Message.RecipientType.TO,
@@ -102,14 +103,19 @@ class SmtpForwardingClient @Inject constructor() {
         }
     }
 
-    private fun properties(config: ForwardingConfig) = Properties().apply {
+    internal fun smtpProperties(config: ForwardingConfig) = Properties().apply {
         setProperty("mail.smtp.host", config.smtpHost.trim())
         setProperty("mail.smtp.port", config.smtpPort.toString())
         setProperty("mail.smtp.auth", config.smtpUsername.isNotBlank().toString())
         setProperty("mail.smtp.connectiontimeout", "20000")
         setProperty("mail.smtp.timeout", "20000")
         setProperty("mail.smtp.writetimeout", "20000")
-        setProperty("mail.smtp.ssl.checkserveridentity", "true")
+        // Android 10's TLS provider does not reliably support the JDK-specific "LDAPS"
+        // endpoint-identification algorithm selected by Angus when this setting is true.
+        // Keep normal certificate-chain validation and have Angus verify the certificate's
+        // DNS names after the handshake instead.
+        setProperty("mail.smtp.ssl.checkserveridentity", "false")
+        setProperty("mail.smtp.ssl.hostnameverifier.class", "MailHostnameVerifier")
         setProperty("mail.smtp.ssl.protocols", "TLSv1.3 TLSv1.2")
         when (config.smtpSecurity) {
             SmtpSecurity.STARTTLS -> {
@@ -141,7 +147,7 @@ class SmtpForwardingClient @Inject constructor() {
             throw SmtpFailure(error.message ?: "Invalid email address", false, error)
         } catch (error: MessagingException) {
             // Authentication/address errors are permanent; other SMTP and network errors may clear.
-            throw SmtpFailure(error.message ?: "SMTP connection failed", true, error)
+            throw SmtpFailure(describe(error, "SMTP connection failed"), true, error)
         } finally {
             try {
                 if (transport.isConnected) transport.close()
@@ -157,7 +163,7 @@ class SmtpForwardingClient @Inject constructor() {
      * whose entire message is just "smtp" on affected release builds.
      */
     internal fun createTransport(config: ForwardingConfig): SMTPTransport {
-        val session = Session.getInstance(properties(config))
+        val session = Session.getInstance(smtpProperties(config))
         val url = URLName(
             "smtp",
             config.smtpHost.trim(),
@@ -167,5 +173,27 @@ class SmtpForwardingClient @Inject constructor() {
             null
         )
         return SMTPTransport(session, url)
+    }
+
+    /** Include the useful nested TLS/network cause that MessagingException normally hides. */
+    internal fun describe(error: MessagingException, fallback: String): String {
+        val seen = java.util.Collections.newSetFromMap(IdentityHashMap<Throwable, Boolean>())
+        val messages = mutableListOf<String>()
+        var current: Throwable? = error
+
+        while (current != null && seen.add(current)) {
+            current.message
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() && !messages.contains(it) }
+                ?.let(messages::add)
+
+            current = when {
+                current is MessagingException && current.nextException != null &&
+                    !seen.contains(current.nextException) -> current.nextException
+                else -> current.cause
+            }
+        }
+
+        return messages.joinToString(": ").takeIf(String::isNotEmpty) ?: fallback
     }
 }

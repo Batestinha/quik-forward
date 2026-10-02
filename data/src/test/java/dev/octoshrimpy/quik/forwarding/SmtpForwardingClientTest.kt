@@ -2,6 +2,7 @@
 package dev.octoshrimpy.quik.forwarding
 
 import jakarta.mail.Message
+import jakarta.mail.MessagingException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -62,5 +63,38 @@ class SmtpForwardingClientTest {
         assertEquals(587, transport.urlName.port)
         assertTrue(transport.startTLS)
         assertTrue(transport.requireStartTLS)
+    }
+
+    @Test
+    fun usesAndroidCompatibleHostnameVerification() {
+        val properties = client.smtpProperties(
+            config.copy(
+                smtpHost = "smtp.gmail.com",
+                smtpPort = 587,
+                smtpSecurity = SmtpSecurity.STARTTLS
+            )
+        )
+
+        assertEquals("false", properties.getProperty("mail.smtp.ssl.checkserveridentity"))
+        assertEquals(
+            "MailHostnameVerifier",
+            properties.getProperty("mail.smtp.ssl.hostnameverifier.class")
+        )
+        assertEquals("TLSv1.3 TLSv1.2", properties.getProperty("mail.smtp.ssl.protocols"))
+        assertEquals("true", properties.getProperty("mail.smtp.starttls.enable"))
+        assertEquals("true", properties.getProperty("mail.smtp.starttls.required"))
+    }
+
+    @Test
+    fun includesNestedTlsFailureDetails() {
+        val error = MessagingException(
+            "Could not convert socket to TLS",
+            IllegalArgumentException("Unsupported endpoint identification algorithm: LDAPS")
+        )
+
+        assertEquals(
+            "Could not convert socket to TLS: Unsupported endpoint identification algorithm: LDAPS",
+            client.describe(error, "SMTP connection failed")
+        )
     }
 }
