@@ -21,6 +21,7 @@ package dev.octoshrimpy.quik.feature.settings
 import android.animation.ObjectAnimator
 import android.app.TimePickerDialog
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.text.format.DateFormat
 import android.view.LayoutInflater
@@ -47,6 +48,7 @@ import dev.octoshrimpy.quik.common.widget.PreferenceView
 import dev.octoshrimpy.quik.common.widget.TextInputDialog
 import dev.octoshrimpy.quik.databinding.SettingsControllerBinding
 import dev.octoshrimpy.quik.feature.settings.about.AboutController
+import dev.octoshrimpy.quik.feature.forwarding.ForwardingSettingsActivity
 import dev.octoshrimpy.quik.feature.settings.swipe.SwipeActionsController
 import dev.octoshrimpy.quik.feature.themepicker.ThemePickerController
 import dev.octoshrimpy.quik.injection.appComponent
@@ -252,6 +254,10 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
         router.pushController(RouterTransaction.with(ThemePickerController())
                 .pushChangeHandler(QkChangeHandler())
                 .popChangeHandler(QkChangeHandler()))
+    }
+
+    override fun showForwarding() {
+        startActivity(Intent(activity, ForwardingSettingsActivity::class.java))
     }
 
     override fun showAbout() {

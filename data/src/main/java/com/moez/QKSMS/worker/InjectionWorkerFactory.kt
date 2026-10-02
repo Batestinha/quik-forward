@@ -24,6 +24,8 @@ import androidx.work.Worker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import dev.octoshrimpy.quik.blocking.BlockingClient
+import dev.octoshrimpy.quik.forwarding.ForwardingManager
+import dev.octoshrimpy.quik.forwarding.ForwardingScheduler
 import dev.octoshrimpy.quik.interactor.UpdateBadge
 import dev.octoshrimpy.quik.manager.ActiveConversationManager
 import dev.octoshrimpy.quik.manager.NotificationManager
@@ -50,6 +52,8 @@ class InjectionWorkerFactory @Inject constructor(
     private val syncRepo: SyncRepository,
     private val filterRepo: MessageContentFilterRepository,
     private val contactRepo: ContactRepository,
+    private val forwardingManager: ForwardingManager,
+    private val forwardingScheduler: ForwardingScheduler,
 
 ) : WorkerFactory() {
     override fun createWorker(
@@ -76,6 +80,7 @@ class InjectionWorkerFactory @Inject constructor(
                 instance.updateBadge =  updateBadge
                 instance.filterRepo = filterRepo
                 instance.contactsRepo = contactRepo
+                instance.forwardingScheduler = forwardingScheduler
             }
             is ReceiveMmsWorker -> {
                 instance.syncRepo = syncRepo
@@ -89,7 +94,10 @@ class InjectionWorkerFactory @Inject constructor(
                 instance.updateBadge = updateBadge
                 instance.filterRepo = filterRepo
                 instance.contactsRepo = contactRepo
+                instance.forwardingScheduler = forwardingScheduler
             }
+            is CaptureForwardingWorker -> instance.forwardingManager = forwardingManager
+            is SendForwardingWorker -> instance.forwardingManager = forwardingManager
         }
 
         return instance

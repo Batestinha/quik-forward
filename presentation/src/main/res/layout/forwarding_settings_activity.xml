@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <include layout="@layout/toolbar" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/forwardingEnabled"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/forwarding_enabled" />
+
+            <TextView
+                style="@style/PreferenceCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/forwarding_message_types" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/incomingSms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/forwarding_incoming_sms" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/incomingMms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/forwarding_incoming_mms" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/outgoingSms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/forwarding_outgoing_sms" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/outgoingMms"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/forwarding_outgoing_mms" />
+
+            <TextView
+                style="@style/PreferenceCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/forwarding_rules" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/allowOnly"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/forwarding_allow_only" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/forwarding_rules_explanation" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/addAllowRule"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/forwarding_add_allow" />
+
+                <Button
+                    android:id="@+id/addDenyRule"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/forwarding_add_deny" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ruleList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView
+                style="@style/PreferenceCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/forwarding_smtp" />
+
+            <EditText
+                android:id="@+id/smtpHost"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/forwarding_smtp_host"
+                android:inputType="textUri" />
+
+            <EditText
+                android:id="@+id/smtpPort"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/forwarding_smtp_port"
+                android:inputType="number" />
+
+            <Spinner
+                android:id="@+id/smtpSecurity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:id="@+id/smtpUsername"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/forwarding_smtp_username"
+                android:inputType="textEmailAddress" />
+
+            <EditText
+                android:id="@+id/smtpPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/forwarding_smtp_password"
+                android:inputType="textPassword" />
+
+            <EditText
+                android:id="@+id/fromAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/forwarding_from_address"
+                android:inputType="textEmailAddress" />
+
+            <EditText
+                android:id="@+id/emailRecipients"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:hint="@string/forwarding_recipients"
+                android:inputType="textEmailAddress|textMultiLine"
+                android:minLines="2" />
+
+            <TextView
+                android:id="@+id/forwardingStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/saveForwarding"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/forwarding_save" />
+
+                <Button
+                    android:id="@+id/testForwarding"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/forwarding_test" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

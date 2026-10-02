@@ -23,6 +23,8 @@ import androidx.work.ForegroundInfo
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import dev.octoshrimpy.quik.blocking.BlockingClient
+import dev.octoshrimpy.quik.forwarding.ForwardingDirection
+import dev.octoshrimpy.quik.forwarding.ForwardingScheduler
 import dev.octoshrimpy.quik.interactor.UpdateBadge
 import dev.octoshrimpy.quik.manager.NotificationManager
 import dev.octoshrimpy.quik.manager.ShortcutManager
@@ -49,6 +51,7 @@ class ReceiveSmsWorker(appContext: Context, workerParams: WorkerParameters)
     @Inject lateinit var shortcutManager: ShortcutManager
     @Inject lateinit var filterRepo: MessageContentFilterRepository
     @Inject lateinit var contactsRepo: ContactRepository
+    @Inject lateinit var forwardingScheduler: ForwardingScheduler
 
     override fun doWork(): Result {
         Timber.v("started")
@@ -125,6 +128,9 @@ class ReceiveSmsWorker(appContext: Context, workerParams: WorkerParameters)
         // update the badge and widget
         Timber.v("update badge and widget")
         updateBadge.execute(Unit)
+
+        // Schedule only after Quik's sender, conversation and content filters accepted it.
+        forwardingScheduler.enqueue(message.id, ForwardingDirection.INCOMING)
 
         Timber.v("finished")
 

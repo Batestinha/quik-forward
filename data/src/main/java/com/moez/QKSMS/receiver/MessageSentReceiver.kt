@@ -26,6 +26,8 @@ import com.klinker.android.send_message.MmsSentReceiver.EXTRA_FILE_PATH
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.interactor.MarkFailed
 import dev.octoshrimpy.quik.interactor.MarkSent
+import dev.octoshrimpy.quik.forwarding.ForwardingDirection
+import dev.octoshrimpy.quik.forwarding.ForwardingScheduler
 import dev.octoshrimpy.quik.repository.MessageRepository
 import timber.log.Timber
 import java.io.File
@@ -40,6 +42,7 @@ class MessageSentReceiver : BroadcastReceiver() {
     @Inject lateinit var markSent: MarkSent
     @Inject lateinit var markFailed: MarkFailed
     @Inject lateinit var messageRepo: MessageRepository
+    @Inject lateinit var forwardingScheduler: ForwardingScheduler
 
     override fun onReceive(context: Context?, intent: Intent) {
         AndroidInjection.inject(this, context)
@@ -65,7 +68,11 @@ class MessageSentReceiver : BroadcastReceiver() {
 
                 when (pendingResult.resultCode) {
                     Activity.RESULT_OK ->
-                        markSent.execute(messageId) { pendingResult.finish() }
+                        markSent.execute(messageId) {
+                            // Exploded BCC messages each arrive here with their own message id.
+                            forwardingScheduler.enqueue(messageId, ForwardingDirection.OUTGOING)
+                            pendingResult.finish()
+                        }
 
                     else -> markFailed.execute(
                         MarkFailed.Params(messageId, pendingResult.resultCode)

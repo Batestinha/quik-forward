@@ -81,8 +81,11 @@ dependencies {
     implementation "com.f2prateek.rx.preferences2:rx-preferences:$rx_preferences_version"
     implementation "com.jakewharton.timber:timber:$timber_version"
     implementation "com.squareup.moshi:moshi:$moshi_version"
+    implementation "com.squareup.moshi:moshi-kotlin:$moshi_version"
     kapt "com.squareup.moshi:moshi-kotlin-codegen:$moshi_version"
     implementation "com.squareup.okhttp3:okhttp:$okhttp3_version"
+    implementation "com.google.re2j:re2j:1.8"
+    implementation "org.eclipse.angus:jakarta.mail:2.0.5"
     implementation 'io.michaelrocks:libphonenumber-android:8.13.47'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 

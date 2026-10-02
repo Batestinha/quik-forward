@@ -44,6 +44,8 @@ import com.klinker.android.send_message.MmsSentReceiver
 import com.klinker.android.send_message.SmsManagerFactory
 import com.klinker.android.send_message.Utils
 import dev.octoshrimpy.quik.blocking.BlockingClient
+import dev.octoshrimpy.quik.forwarding.ForwardingDirection
+import dev.octoshrimpy.quik.forwarding.ForwardingScheduler
 import dev.octoshrimpy.quik.interactor.UpdateBadge
 import dev.octoshrimpy.quik.manager.ActiveConversationManager
 import dev.octoshrimpy.quik.manager.NotificationManager
@@ -88,6 +90,7 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
     @Inject lateinit var shortcutManager: ShortcutManager
     @Inject lateinit var filterRepo: MessageContentFilterRepository
     @Inject lateinit var contactsRepo: ContactRepository
+    @Inject lateinit var forwardingScheduler: ForwardingScheduler
 
     override fun doWork(): Result {
         Timber.v("started")
@@ -228,6 +231,9 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
                         // update the badge and widget
                         Timber.v("update badge and widget")
                         updateBadge.execute(Unit)
+
+                        // This point is reached only for messages accepted by Quik's filters.
+                        forwardingScheduler.enqueue(message.id, ForwardingDirection.INCOMING)
                     }
 
                     // send ack to mmsc

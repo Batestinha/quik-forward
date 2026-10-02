@@ -18,7 +18,7 @@
   -->
 <resources>
 
-    <string name="app_name" translatable="false">QUIK</string>
+    <string name="app_name" translatable="false">QUIK Forward</string>
 
     <string name="shortcut_compose_long_label">New conversation</string>
     <string name="shortcut_compose_short_label">Compose</string>
@@ -133,11 +133,36 @@
     <string name="compose_number_picker_always">Always</string>
     <string name="compose_title_selected">%d selected</string>
     <string name="compose_subtitle_results">%1$d of %2$d results</string>
-    <string name="compose_send_group_title">Send as group message</string>
+    <string name="compose_send_group_title">Group messaging</string>
     <string name="compose_send_group_summary_on">Recipients and replies will be visible to everyone</string>
-    <string name="compose_send_group_summary_off">Messages will be sent separately to all recipients</string>
+    <string name="compose_send_group_summary_off">BCC: send a separate private message to each recipient</string>
     <string name="compose_messages_empty">This is the start of your conversation. Say something nice!</string>
     <string name="compose_vcard_label">Contact card</string>
+    <string name="settings_forwarding_title">SMS/MMS email forwarding</string>
+    <string name="settings_forwarding_summary">Forward accepted messages through your SMTP server</string>
+    <string name="forwarding_title">Email forwarding</string>
+    <string name="forwarding_enabled">Enable forwarding</string>
+    <string name="forwarding_message_types">Message directions and types</string>
+    <string name="forwarding_incoming_sms">Incoming SMS</string>
+    <string name="forwarding_incoming_mms">Incoming MMS</string>
+    <string name="forwarding_outgoing_sms">Outgoing SMS</string>
+    <string name="forwarding_outgoing_mms">Outgoing MMS</string>
+    <string name="forwarding_rules">Allow and deny rules</string>
+    <string name="forwarding_allow_only">Allowlisted only (deny always wins)</string>
+    <string name="forwarding_rules_explanation">Rules can match an exact address/contact, literal message text, or a safe RE2 regular expression. Each rule has incoming/outgoing and SMS/MMS scopes.</string>
+    <string name="forwarding_add_allow">Add allow</string>
+    <string name="forwarding_add_deny">Add deny</string>
+    <string name="forwarding_smtp">SMTP (TLS required)</string>
+    <string name="forwarding_smtp_host">SMTP host</string>
+    <string name="forwarding_smtp_port">SMTP port</string>
+    <string name="forwarding_smtp_username">Username (optional)</string>
+    <string name="forwarding_smtp_password">App password (leave blank to keep stored value)</string>
+    <string name="forwarding_from_address">From email address</string>
+    <string name="forwarding_recipients">Forward to (one email address per line)</string>
+    <string name="forwarding_save">Save</string>
+    <string name="forwarding_test">Test connection</string>
+    <string name="forwarding_verified">SMTP settings verified</string>
+    <string name="forwarding_not_verified">Test these SMTP settings before enabling forwarding</string>
     <string name="compose_scheduled_for">Scheduled time:</string>
     <string name="compose_scheduled_future">Selected time must be in the future!</string>
     <string name="compose_scheduled_plus">You must unlock QUIK+ to use scheduled messaging</string>

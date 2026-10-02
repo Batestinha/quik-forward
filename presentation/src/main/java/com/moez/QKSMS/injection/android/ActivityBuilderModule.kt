@@ -28,6 +28,7 @@ import dev.octoshrimpy.quik.feature.contacts.ContactsActivity
 import dev.octoshrimpy.quik.feature.contacts.ContactsActivityModule
 import dev.octoshrimpy.quik.feature.conversationinfo.ConversationInfoActivity
 import dev.octoshrimpy.quik.feature.gallery.GalleryActivity
+import dev.octoshrimpy.quik.feature.forwarding.ForwardingSettingsActivity
 import dev.octoshrimpy.quik.feature.gallery.GalleryActivityModule
 import dev.octoshrimpy.quik.feature.main.MainActivity
 import dev.octoshrimpy.quik.feature.main.MainActivityModule
@@ -94,6 +95,10 @@ abstract class ActivityBuilderModule {
     @ActivityScope
     @ContributesAndroidInjector(modules = [])
     abstract fun bindSettingsActivity(): SettingsActivity
+
+    @ActivityScope
+    @ContributesAndroidInjector(modules = [])
+    abstract fun bindForwardingSettingsActivity(): ForwardingSettingsActivity
 
     @ActivityScope
     @ContributesAndroidInjector(modules = [])

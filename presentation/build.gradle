@@ -25,12 +25,12 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId 'dev.octoshrimpy.quik'
+        applicationId 'local.quikforward.sms'
         minSdkVersion 23
         targetSdkVersion 33
-        versionCode 2239
-        versionName '4.3.7'
-        setProperty("archivesBaseName", "QUIK-v${versionName}")
+        versionCode 2239001
+        versionName '4.3.7-forward.1'
+        setProperty("archivesBaseName", "QUIK-Forward-v${versionName}")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -66,9 +66,7 @@ android {
             signingConfig signingConfigs.release
         }
         debug {
-            applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
-            resValue("string", "app_name", "QUIK-Debug")
             resValue("string", "application_id", defaultConfig.applicationId)
             signingConfig signingConfigs.debug
         }
@@ -78,7 +76,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
             matchingFallbacks = ['release']
-            applicationIdSuffix ".fdroid"
         }
     }
 
@@ -93,6 +90,11 @@ android {
 
     lint {
         abortOnError false
+    }
+    packagingOptions {
+        resources {
+            pickFirsts += ['META-INF/LICENSE.md', 'META-INF/NOTICE.md']
+        }
     }
     namespace 'dev.octoshrimpy.quik'
     buildFeatures {
