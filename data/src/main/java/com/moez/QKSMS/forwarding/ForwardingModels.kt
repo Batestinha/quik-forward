@@ -30,7 +30,8 @@ data class ForwardingConfig(
     val smtpSecurity: SmtpSecurity = SmtpSecurity.STARTTLS,
     val smtpUsername: String = "",
     val fromAddress: String = "",
-    val recipients: List<String> = emptyList()
+    val recipients: List<String> = emptyList(),
+    val bccRecipients: Boolean = true
 )
 
 @JsonClass(generateAdapter = false)

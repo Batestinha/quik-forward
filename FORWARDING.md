@@ -14,6 +14,8 @@ This fork is based on QUIK 4.3.7 and uses the application ID
 - SMS and MMS are independently selectable for incoming and outgoing directions.
 - SMTP supports required STARTTLS or implicit TLS. Authentication is optional;
   when used, the app password is encrypted with an Android Keystore AES-GCM key.
+- Forwarding destinations use the concealed BCC recipient field by default. This
+  is configurable; disabling it puts destination addresses in the visible To field.
 - MMS binary parts are copied into private app storage before delivery. The raw
   aggregate attachment limit is 10 MB and omitted files are listed in the email.
 - Delivery uses a unique WorkManager chain, network constraints, exponential
@@ -44,3 +46,15 @@ sharing a development host:
 Before enabling forwarding, save the SMTP fields and use **Test connection**.
 Changing the server, credentials, sender, or recipient list invalidates the test
 and automatically disables forwarding until the new settings are verified.
+
+## Release signing
+
+Local release builds use the persistent signing material below. Both files are
+ignored by Git and must be backed up together in a secure offline location:
+
+- `.secrets/quik-forward-release.p12`
+- `.secrets/release-signing.password`
+
+Do not regenerate or lose this key: Android will only accept application updates
+signed by the same certificate. CI can instead provide `QUIK_RELEASE_KEYSTORE`,
+`QUIK_RELEASE_KEY_ALIAS`, and `QUIK_RELEASE_PASSWORD` environment variables.

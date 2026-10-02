@@ -45,6 +45,11 @@
 -dontwarn org.slf4j.Logger
 -dontwarn org.slf4j.LoggerFactory
 
+# Angus Mail contains optional desktop and GraalVM integrations that are not used on Android.
+-dontwarn java.awt.Image
+-dontwarn java.awt.Toolkit
+-dontwarn org.graalvm.nativeimage.hosted.Feature
+
 -keepclasseswithmembers class * {
     @com.squareup.moshi.* <methods>;
 }
@@ -119,4 +124,3 @@
 -keep class io.reactivex.subjects.** { *; }
 -keep class androidx.activity.result.** { *; }
 -keep class dev.octoshrimpy.quik.** { *; }
-

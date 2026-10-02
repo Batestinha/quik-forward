@@ -46,6 +46,7 @@ class ForwardingSettingsActivity : QkThemedActivity() {
     private lateinit var smtpPassword: EditText
     private lateinit var fromAddress: EditText
     private lateinit var recipients: EditText
+    private lateinit var bccRecipients: SwitchCompat
     private lateinit var status: TextView
     private lateinit var ruleList: LinearLayout
     private lateinit var testButton: Button
@@ -121,6 +122,7 @@ class ForwardingSettingsActivity : QkThemedActivity() {
         smtpPassword = findViewById(R.id.smtpPassword)
         fromAddress = findViewById(R.id.fromAddress)
         recipients = findViewById(R.id.emailRecipients)
+        bccRecipients = findViewById(R.id.bccRecipients)
         status = findViewById(R.id.forwardingStatus)
         ruleList = findViewById(R.id.ruleList)
         testButton = findViewById(R.id.testForwarding)
@@ -140,6 +142,7 @@ class ForwardingSettingsActivity : QkThemedActivity() {
         smtpUsername.setText(config.smtpUsername)
         fromAddress.setText(config.fromAddress)
         recipients.setText(config.recipients.joinToString("\n"))
+        bccRecipients.isChecked = config.bccRecipients
         loading = false
         updateVerificationStatus(config)
     }
@@ -163,7 +166,8 @@ class ForwardingSettingsActivity : QkThemedActivity() {
         recipients = recipients.text.toString()
             .split(Regex("[;\\n]+"))
             .map(String::trim)
-            .filter(String::isNotBlank)
+            .filter(String::isNotBlank),
+        bccRecipients = bccRecipients.isChecked
     )
 
     private fun typedPassword(): String? = smtpPassword.text.toString().takeIf(String::isNotEmpty)

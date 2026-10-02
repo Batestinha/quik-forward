@@ -37,17 +37,15 @@ android {
     signingConfigs {
         debug // Uses the default debug keystore.
         release {
-            def keystoreProps = new Properties()
-            def keystorePropsFile = rootProject.file('./.gradle/.gradlerc')
-            storeFile file('./my-release-key.keystore')
-            keyAlias 'quik_release'
-            if (keystorePropsFile.exists()) {
-                keystoreProps.load(new FileInputStream(keystorePropsFile))
-            } else {
-                // do nothing
-            }
-            storePassword keystoreProps['storePassword']
-            keyPassword keystoreProps['keyPassword']
+            def passwordFile = rootProject.file('.secrets/release-signing.password')
+            def localPassword = passwordFile.exists()
+                    ? passwordFile.getText('UTF-8').trim()
+                    : null
+            storeFile rootProject.file(System.getenv('QUIK_RELEASE_KEYSTORE')
+                    ?: '.secrets/quik-forward-release.p12')
+            keyAlias System.getenv('QUIK_RELEASE_KEY_ALIAS') ?: 'quik_forward_release'
+            storePassword System.getenv('QUIK_RELEASE_PASSWORD') ?: localPassword
+            keyPassword System.getenv('QUIK_RELEASE_PASSWORD') ?: localPassword
         }
     }
 
@@ -100,11 +98,6 @@ android {
     buildFeatures {
         buildConfig true
         viewBinding true
-    }
-    if (System.getenv("CI") == "true") {
-        signingConfigs.release.storePassword = System.getenv("keystore_password")
-        signingConfigs.release.keyAlias = System.getenv("key_alias")
-        signingConfigs.release.keyPassword = System.getenv("key_password")
     }
 }
 
@@ -219,8 +212,7 @@ dependencies {
 gradle.taskGraph.whenReady { taskGraph ->
     if ((taskGraph.hasTask(':assembleRelease') ||
             taskGraph.allTasks.any { it.name == 'assembleRelease' }) &&
-            !file('./.gradle/.gradlerc').exists() &&
-            System.getenv("CI") != "true") {
-        throw new GradleException("Keystore properties file not found")
+            !android.signingConfigs.release.storeFile.exists()) {
+        throw new GradleException("Release keystore not found. See .secrets/README.txt")
     }
 }

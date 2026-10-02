@@ -159,6 +159,8 @@
     <string name="forwarding_smtp_password">App password (leave blank to keep stored value)</string>
     <string name="forwarding_from_address">From email address</string>
     <string name="forwarding_recipients">Forward to (one email address per line)</string>
+    <string name="forwarding_bcc_recipients">Send forwarding recipients using BCC</string>
+    <string name="forwarding_bcc_recipients_summary">When disabled, destination addresses appear in the visible To header.</string>
     <string name="forwarding_save">Save</string>
     <string name="forwarding_test">Test connection</string>
     <string name="forwarding_verified">SMTP settings verified</string>

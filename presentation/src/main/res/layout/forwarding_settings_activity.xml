@@ -153,6 +153,17 @@
                 android:inputType="textEmailAddress|textMultiLine"
                 android:minLines="2" />
 
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/bccRecipients"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/forwarding_bcc_recipients" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/forwarding_bcc_recipients_summary" />
+
             <TextView
                 android:id="@+id/forwardingStatus"
                 android:layout_width="match_parent"

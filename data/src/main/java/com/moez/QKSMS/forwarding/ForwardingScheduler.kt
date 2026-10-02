@@ -18,10 +18,11 @@ import javax.inject.Singleton
 
 @Singleton
 class ForwardingScheduler @Inject constructor(context: Context) {
-    private val workManager = WorkManager.getInstance(context)
+    private val appContext = context.applicationContext
 
     fun enqueue(messageId: Long, direction: ForwardingDirection) {
         if (messageId <= 0) return
+        val workManager = WorkManager.getInstance(appContext)
         val id = "${direction.name.lowercase(Locale.ROOT)}-$messageId"
         val input = Data.Builder()
             .putLong(CaptureForwardingWorker.KEY_MESSAGE_ID, messageId)

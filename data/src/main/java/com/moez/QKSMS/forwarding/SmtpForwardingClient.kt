@@ -31,11 +31,18 @@ class SmtpForwardingClient @Inject constructor() {
 
     fun send(config: ForwardingConfig, password: String, job: ForwardingJob) {
         validate(config)
-        val session = Session.getInstance(properties(config))
-        val message = MimeMessage(session).apply {
+        val message = createMessage(config, job)
+
+        withConnectedTransport(config, password) { transport ->
+            transport.sendMessage(message, message.allRecipients)
+        }
+    }
+
+    internal fun createMessage(config: ForwardingConfig, job: ForwardingJob): MimeMessage =
+        MimeMessage(Session.getInstance(properties(config))).apply {
             setFrom(InternetAddress(config.fromAddress.trim(), true))
             setRecipients(
-                Message.RecipientType.TO,
+                if (config.bccRecipients) Message.RecipientType.BCC else Message.RecipientType.TO,
                 config.recipients.flatMap { InternetAddress.parse(it, true).toList() }.toTypedArray()
             )
             subject = "QUIK Forward: ${job.direction.name.lowercase().replaceFirstChar(Char::uppercase)} " +
@@ -76,11 +83,6 @@ class SmtpForwardingClient @Inject constructor() {
             // saveChanges creates its own id, so restore the deterministic id used for deduplication.
             setHeader("Message-ID", "<quik-forward-${job.id}@local>")
         }
-
-        withConnectedTransport(config, password) { transport ->
-            transport.sendMessage(message, message.allRecipients)
-        }
-    }
 
     fun validate(config: ForwardingConfig) {
         if (config.smtpHost.isBlank()) throw SmtpFailure("SMTP host is required", false)
