@@ -32,7 +32,8 @@ class ForwardingManager @Inject constructor(
     private val subscriptionManager: SubscriptionManagerCompat,
     private val phoneNumberUtils: PhoneNumberUtils,
     private val secretStore: ForwardingSecretStore,
-    private val smtpClient: SmtpForwardingClient
+    private val smtpClient: SmtpForwardingClient,
+    private val readMarker: ForwardingReadMarker
 ) {
     companion object {
         private const val PREF_CONFIG = "forwarding.config.v1"
@@ -160,11 +161,15 @@ class ForwardingManager @Inject constructor(
     }
 
     fun send(jobId: String): ForwardingSendResult {
+        val job = readJob(jobId)
         if (hasReceipt(jobId)) {
-            cleanup(jobId)
-            return ForwardingSendResult.Success
+            if (job == null) {
+                cleanup(jobId)
+                return ForwardingSendResult.Success
+            }
+            return finishSuccessfulSend(jobId, job)
         }
-        val job = readJob(jobId) ?: return ForwardingSendResult.Success
+        if (job == null) return ForwardingSendResult.Success
         val config = loadConfig()
         if (!config.enabled || !isVerified(config)) {
             cleanup(jobId)
@@ -174,8 +179,7 @@ class ForwardingManager @Inject constructor(
         return try {
             smtpClient.send(config, secretStore.load(), job)
             markReceipt(jobId)
-            cleanup(jobId)
-            ForwardingSendResult.Success
+            finishSuccessfulSend(jobId, job)
         } catch (failure: SmtpFailure) {
             if (failure.retryable) ForwardingSendResult.Retry else {
                 cleanup(jobId)
@@ -187,6 +191,12 @@ class ForwardingManager @Inject constructor(
             cleanup(jobId)
             ForwardingSendResult.PermanentFailure
         }
+    }
+
+    private fun finishSuccessfulSend(jobId: String, job: ForwardingJob): ForwardingSendResult {
+        if (!readMarker.mark(job)) return ForwardingSendResult.Retry
+        cleanup(jobId)
+        return ForwardingSendResult.Success
     }
 
     private fun isTypeEnabled(

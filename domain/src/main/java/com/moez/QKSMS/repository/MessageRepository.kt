@@ -72,6 +72,8 @@ interface MessageRepository {
 
     fun markRead(threadIds: Collection<Long>): Int
 
+    fun markMessagesRead(messageIds: Collection<Long>): Set<Long>
+
     fun markUnread(threadIds: Collection<Long>): Int
 
     fun markSending(messageId: Long)

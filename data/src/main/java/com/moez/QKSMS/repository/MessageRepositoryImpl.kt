@@ -385,6 +385,39 @@ open class MessageRepositoryImpl @Inject constructor(
             }
             ?: 0
 
+    override fun markMessagesRead(messageIds: Collection<Long>): Set<Long> {
+        if (messageIds.isEmpty()) return emptySet()
+
+        val messages = Realm.getDefaultInstance().use { realm ->
+            realm.refresh()
+            realm.where(Message::class.java)
+                .anyOf("id", messageIds.toLongArray())
+                .findAll()
+                .map { message -> message.threadId to message.getUri() }
+                .also {
+                    realm.executeTransaction {
+                        realm.where(Message::class.java)
+                            .anyOf("id", messageIds.toLongArray())
+                            .findAll()
+                            .forEach { message ->
+                                message.seen = true
+                                message.read = true
+                            }
+                    }
+                }
+        }
+
+        val values = contentValuesOf(Sms.SEEN to true, Sms.READ to true)
+        messages.map { it.second }
+            .filterNot { it == Uri.EMPTY }
+            .forEach { uri ->
+                tryOrNull(true) {
+                    context.contentResolver.update(uri, values, null, null)
+                }
+            }
+        return messages.map { it.first }.toSet()
+    }
+
     override fun markUnread(threadIds: Collection<Long>) =
         threadIds.takeIf { it.isNotEmpty() }
             ?.let {
