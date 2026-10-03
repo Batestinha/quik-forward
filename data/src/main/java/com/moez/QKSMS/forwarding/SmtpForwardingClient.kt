@@ -44,21 +44,27 @@ class SmtpForwardingClient @Inject constructor() {
 
     internal fun createMessage(config: ForwardingConfig, job: ForwardingJob): MimeMessage =
         MimeMessage(Session.getInstance(smtpProperties(config))).apply {
-            val participantLabels = job.participantLabels
-                .takeIf { it.size == job.participants.size }
-                ?: job.participants
-            val participantsText = participantLabels.joinToString()
-            val from = InternetAddress(config.fromAddress.trim(), true)
-            if (participantLabels != job.participants) {
-                from.setPersonal(participantsText, Charsets.UTF_8.name())
+            val remoteParties = formatRemoteParties(job.participants, job.participantLabels)
+            val localParty = formatParty(job.localLabel, job.localNumber, "This phone")
+            val sender = if (job.direction == ForwardingDirection.INCOMING) {
+                remoteParties
+            } else {
+                localParty
             }
+            val recipient = if (job.direction == ForwardingDirection.INCOMING) {
+                localParty
+            } else {
+                remoteParties
+            }
+            val from = InternetAddress(config.fromAddress.trim(), true)
+            from.setPersonal(sender, Charsets.UTF_8.name())
             setFrom(from)
             setRecipients(
                 if (config.bccRecipients) Message.RecipientType.BCC else Message.RecipientType.TO,
                 config.recipients.flatMap { InternetAddress.parse(it, true).toList() }.toTypedArray()
             )
             subject = "QUIK Forward: ${job.direction.name.lowercase().replaceFirstChar(Char::uppercase)} " +
-                "${job.kind.name} $participantsText"
+                "${job.kind.name} — $sender → $recipient"
             sentDate = Date(job.timestamp)
             setHeader("Message-ID", "<quik-forward-${job.id}@local>")
             setHeader("X-QUIK-Forward-Direction", job.direction.name)
@@ -67,13 +73,8 @@ class SmtpForwardingClient @Inject constructor() {
             val text = buildString {
                 appendLine("Direction: ${job.direction.name.lowercase()}")
                 appendLine("Type: ${job.kind.name}")
-                appendLine(
-                    "${if (job.direction == ForwardingDirection.INCOMING) "From" else "To"}: " +
-                        participantsText
-                )
-                if (participantLabels != job.participants) {
-                    appendLine("Address: ${job.participants.joinToString()}")
-                }
+                appendLine("Sender: $sender")
+                appendLine("Recipient: $recipient")
                 appendLine("Date: ${Date(job.timestamp)}")
                 if (job.subject.isNotBlank()) appendLine("Subject: ${job.subject}")
                 if (job.omittedAttachments.isNotEmpty()) {
@@ -101,6 +102,24 @@ class SmtpForwardingClient @Inject constructor() {
             // saveChanges creates its own id, so restore the deterministic id used for deduplication.
             setHeader("Message-ID", "<quik-forward-${job.id}@local>")
         }
+
+    private fun formatRemoteParties(addresses: List<String>, labels: List<String>): String =
+        addresses.mapIndexed { index, address ->
+            val label = labels.getOrNull(index)
+                ?.takeUnless { it.trim().equals(address.trim(), ignoreCase = true) }
+                .orEmpty()
+            formatParty(label, address, "Unknown")
+        }.joinToString().ifBlank { "Unknown (number unavailable)" }
+
+    private fun formatParty(label: String, number: String, fallbackLabel: String): String {
+        val safeLabel = sanitizeHeaderValue(label).ifBlank { fallbackLabel }
+        val safeNumber = sanitizeHeaderValue(number).ifBlank { "number unavailable" }
+        return "$safeLabel ($safeNumber)"
+    }
+
+    private fun sanitizeHeaderValue(value: String): String = value
+        .replace(Regex("[\\r\\n]+"), " ")
+        .trim()
 
     fun validate(config: ForwardingConfig) {
         if (config.smtpHost.isBlank()) throw SmtpFailure("SMTP host is required", false)

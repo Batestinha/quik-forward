@@ -57,5 +57,7 @@ class ParticipantLabelsTest {
 
         assertNotNull(job)
         assertEquals(emptyList<String>(), job?.participantLabels)
+        assertEquals("", job?.localNumber)
+        assertEquals("", job?.localLabel)
     }
 }

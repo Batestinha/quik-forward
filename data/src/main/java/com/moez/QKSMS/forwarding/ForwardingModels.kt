@@ -65,6 +65,8 @@ data class ForwardingJob(
     val timestamp: Long,
     val participants: List<String>,
     val participantLabels: List<String> = emptyList(),
+    val localNumber: String = "",
+    val localLabel: String = "",
     val subject: String,
     val body: String,
     val omittedAttachments: List<String> = emptyList(),

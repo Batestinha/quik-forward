@@ -3,9 +3,12 @@ package dev.octoshrimpy.quik.forwarding
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
+import android.provider.ContactsContract
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import dev.octoshrimpy.quik.compat.SubscriptionManagerCompat
 import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
@@ -26,6 +29,7 @@ class ForwardingManager @Inject constructor(
     moshi: Moshi,
     private val messageRepository: MessageRepository,
     private val conversationRepository: ConversationRepository,
+    private val subscriptionManager: SubscriptionManagerCompat,
     private val phoneNumberUtils: PhoneNumberUtils,
     private val secretStore: ForwardingSecretStore,
     private val smtpClient: SmtpForwardingClient
@@ -119,6 +123,7 @@ class ForwardingManager @Inject constructor(
 
         val participants = participants(message, direction)
         val participantLabels = participantLabels(message, participants)
+        val (localNumber, localLabel) = localIdentity(message)
         val subject = message.getCleansedSubject()
         val body = message.getText(withSubject = false)
         val searchableText = listOf(subject, body).filter(String::isNotBlank).joinToString("\n")
@@ -143,6 +148,8 @@ class ForwardingManager @Inject constructor(
             timestamp = message.date.takeIf { it > 0 } ?: System.currentTimeMillis(),
             participants = participants,
             participantLabels = participantLabels,
+            localNumber = localNumber,
+            localLabel = localLabel,
             subject = subject,
             body = body,
             omittedAttachments = omitted,
@@ -212,6 +219,44 @@ class ForwardingManager @Inject constructor(
             .orEmpty()
             .map { recipient -> recipient.address to recipient.contact?.name }
         return resolveParticipantLabels(participants, savedContacts, phoneNumberUtils::compare)
+    }
+
+    private fun localIdentity(message: Message): Pair<String, String> {
+        val subscriptions = subscriptionManager.activeSubscriptionInfoList
+        val subscription = subscriptions.firstOrNull { it.subscriptionId == message.subId }
+            ?: subscriptions.singleOrNull()
+        val number = runCatching { subscription?.number.orEmpty() }
+            .getOrDefault("")
+            .trim()
+        val savedName = savedContactName(number)
+        val fallbackLabel = subscription?.displayName?.toString()
+            ?.takeIf(String::isNotBlank)
+            ?: subscription?.simSlotIndex?.takeIf { it >= 0 }?.let { slot -> "SIM ${slot + 1}" }
+            ?: "This phone"
+        val label = (savedName ?: fallbackLabel)
+            .replace(Regex("[\\r\\n]+"), " ")
+            .trim()
+            .ifBlank { "This phone" }
+        return number to label
+    }
+
+    private fun savedContactName(number: String): String? {
+        if (number.isBlank()) return null
+        val uri = Uri.withAppendedPath(
+            ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+            Uri.encode(number)
+        )
+        return runCatching {
+            context.contentResolver.query(
+                uri,
+                arrayOf(ContactsContract.PhoneLookup.DISPLAY_NAME),
+                null,
+                null,
+                null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getString(0)?.takeIf(String::isNotBlank) else null
+            }
+        }.getOrNull()
     }
 
     private fun captureAttachments(

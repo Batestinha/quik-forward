@@ -22,6 +22,8 @@ class SmtpForwardingClientTest {
         kind = ForwardingMessageKind.SMS,
         timestamp = 1,
         participants = listOf("+351000000000"),
+        localNumber = "+351999999999",
+        localLabel = "Galaxy S9",
         subject = "",
         body = "Test"
     )
@@ -55,13 +57,17 @@ class SmtpForwardingClientTest {
             job.copy(participantLabels = listOf("Alice Example"))
         )
 
-        assertEquals("QUIK Forward: Incoming SMS Alice Example", message.subject)
+        assertEquals(
+            "QUIK Forward: Incoming SMS — Alice Example (+351000000000) → " +
+                "Galaxy S9 (+351999999999)",
+            message.subject
+        )
         val from = message.from.single() as InternetAddress
-        assertEquals("Alice Example", from.personal)
+        assertEquals("Alice Example (+351000000000)", from.personal)
         assertEquals("sender@example.com", from.address)
         val content = message.content.toString()
-        assertTrue(content.contains("From: Alice Example\n"))
-        assertTrue(content.contains("Address: +351000000000\n"))
+        assertTrue(content.contains("Sender: Alice Example (+351000000000)\n"))
+        assertTrue(content.contains("Recipient: Galaxy S9 (+351999999999)\n"))
         assertTrue(content.endsWith("\nTest"))
     }
 
@@ -69,9 +75,45 @@ class SmtpForwardingClientTest {
     fun fallsBackToAddressWhenNoContactNameExists() {
         val message = client.createMessage(config, job)
 
-        assertEquals("QUIK Forward: Incoming SMS +351000000000", message.subject)
-        assertNull((message.from.single() as InternetAddress).personal)
-        assertTrue(message.content.toString().contains("From: +351000000000"))
+        assertEquals(
+            "QUIK Forward: Incoming SMS — Unknown (+351000000000) → " +
+                "Galaxy S9 (+351999999999)",
+            message.subject
+        )
+        assertEquals(
+            "Unknown (+351000000000)",
+            (message.from.single() as InternetAddress).personal
+        )
+        assertTrue(message.content.toString().contains("Sender: Unknown (+351000000000)"))
+    }
+
+    @Test
+    fun reversesSenderAndRecipientForOutgoingMessages() {
+        val message = client.createMessage(
+            config,
+            job.copy(
+                direction = ForwardingDirection.OUTGOING,
+                participantLabels = listOf("Alice Example")
+            )
+        )
+
+        assertEquals(
+            "Galaxy S9 (+351999999999)",
+            (message.from.single() as InternetAddress).personal
+        )
+        val content = message.content.toString()
+        assertTrue(content.contains("Sender: Galaxy S9 (+351999999999)\n"))
+        assertTrue(content.contains("Recipient: Alice Example (+351000000000)\n"))
+    }
+
+    @Test
+    fun statesWhenTheLocalNumberIsUnavailable() {
+        val message = client.createMessage(
+            config,
+            job.copy(localNumber = "", localLabel = "")
+        )
+
+        assertTrue(message.content.toString().contains("Recipient: This phone (number unavailable)"))
     }
 
     @Test

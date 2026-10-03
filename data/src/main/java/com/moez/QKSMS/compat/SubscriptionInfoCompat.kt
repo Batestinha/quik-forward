@@ -28,4 +28,7 @@ data class SubscriptionInfoCompat(private val subscriptionInfo: SubscriptionInfo
 
     val displayName: CharSequence get() = subscriptionInfo.displayName
 
+    @Suppress("DEPRECATION")
+    val number: String get() = subscriptionInfo.number.orEmpty()
+
 }
