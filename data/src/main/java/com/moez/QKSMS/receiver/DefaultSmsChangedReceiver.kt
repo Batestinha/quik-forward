@@ -27,6 +27,7 @@ import androidx.annotation.RequiresApi
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.interactor.SyncMessages
 import dev.octoshrimpy.quik.util.Preferences
+import dev.octoshrimpy.quik.worker.ReconcileForwardingWorker
 import javax.inject.Inject
 
 class DefaultSmsChangedReceiver : BroadcastReceiver() {
@@ -40,7 +41,10 @@ class DefaultSmsChangedReceiver : BroadcastReceiver() {
 
         if (intent.getBooleanExtra(Telephony.Sms.Intents.EXTRA_IS_DEFAULT_SMS_APP, false)) {
             val pendingResult = goAsync()
-            syncMessages.execute(Unit) { pendingResult.finish() }
+            syncMessages.execute(Unit) {
+                ReconcileForwardingWorker.register(context)
+                pendingResult.finish()
+            }
         }
     }
 

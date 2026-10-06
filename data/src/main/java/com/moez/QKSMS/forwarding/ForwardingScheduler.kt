@@ -8,6 +8,7 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.Operation
 import androidx.work.WorkManager
 import dev.octoshrimpy.quik.worker.CaptureForwardingWorker
 import dev.octoshrimpy.quik.worker.SendForwardingWorker
@@ -20,8 +21,8 @@ import javax.inject.Singleton
 class ForwardingScheduler @Inject constructor(context: Context) {
     private val appContext = context.applicationContext
 
-    fun enqueue(messageId: Long, direction: ForwardingDirection) {
-        if (messageId <= 0) return
+    fun enqueue(messageId: Long, direction: ForwardingDirection): Operation? {
+        if (messageId <= 0) return null
         val workManager = WorkManager.getInstance(appContext)
         val id = "${direction.name.lowercase(Locale.ROOT)}-$messageId"
         val input = Data.Builder()
@@ -37,7 +38,7 @@ class ForwardingScheduler @Inject constructor(context: Context) {
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             .build()
-        workManager.beginUniqueWork("quik-forward-$id", ExistingWorkPolicy.KEEP, capture)
+        return workManager.beginUniqueWork("quik-forward-$id", ExistingWorkPolicy.KEEP, capture)
             .then(send)
             .enqueue()
     }
