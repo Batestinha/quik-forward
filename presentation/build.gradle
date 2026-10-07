@@ -28,8 +28,8 @@ android {
         applicationId 'local.quikforward.sms'
         minSdkVersion 23
         targetSdkVersion 33
-        versionCode 2239009
-        versionName '4.3.7-forward.9'
+        versionCode 2239010
+        versionName '4.3.7-forward.10'
         setProperty("archivesBaseName", "QUIK-Forward-v${versionName}")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

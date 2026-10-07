@@ -48,9 +48,6 @@ class KeepAliveSettingsActivity : QkThemedActivity() {
         title = getString(R.string.keepalive_title)
         showBackButton(true)
         content = findViewById(R.id.keepAliveContent)
-        label(content, "UZO preset: paid activity every 120 days, with a 7-day margin. A keep-alive SMS is due after 113 days without activity.")
-        label(content, "Successfully sent SMS/MMS and connected outgoing calls reset only that SIM’s timer. UZO requires a charge to recharge balance; this app cannot verify charges or bonus usage and does not top up credit.")
-        button(content, "Read UZO conditions") { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.uzo.pt/ajuda/tarifarios-e-adesao"))) }
         status = label(content, "Loading SIMs…")
         button(content, "Make QUIK the default SMS app") {
             if (Build.VERSION.SDK_INT >= 29) roleRequest.launch(getSystemService(RoleManager::class.java).createRequestRoleIntent(RoleManager.ROLE_SMS))
