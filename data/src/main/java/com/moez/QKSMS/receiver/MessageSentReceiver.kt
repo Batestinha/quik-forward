@@ -71,6 +71,7 @@ class MessageSentReceiver : BroadcastReceiver() {
                         markSent.execute(messageId) {
                             // Exploded BCC messages each arrive here with their own message id.
                             forwardingScheduler.enqueue(messageId, ForwardingDirection.OUTGOING)
+                            context?.let { dev.octoshrimpy.quik.keepalive.KeepAliveScheduler.sentMessage(it, messageId, System.currentTimeMillis()) }
                             pendingResult.finish()
                         }
 

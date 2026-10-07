@@ -260,6 +260,10 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
         startActivity(Intent(activity, ForwardingSettingsActivity::class.java))
     }
 
+    override fun showKeepAlive() {
+        startActivity(Intent(activity, dev.octoshrimpy.quik.feature.keepalive.KeepAliveSettingsActivity::class.java))
+    }
+
     override fun showAbout() {
         router.pushController(RouterTransaction.with(AboutController())
                 .pushChangeHandler(QkChangeHandler())

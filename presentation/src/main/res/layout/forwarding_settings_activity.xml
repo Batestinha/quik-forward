@@ -54,6 +54,12 @@
                 android:layout_height="wrap_content"
                 android:text="@string/forwarding_outgoing_mms" />
 
+            <Button
+                android:id="@+id/forwardingSimIdentity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="SIM phone numbers and names" />
+
             <TextView
                 style="@style/PreferenceCategory"
                 android:layout_width="match_parent"

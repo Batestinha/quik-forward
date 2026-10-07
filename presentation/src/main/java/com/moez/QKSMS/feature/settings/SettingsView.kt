@@ -47,5 +47,6 @@ interface SettingsView : QkViewContract<SettingsState> {
     fun showSwipeActions()
     fun showThemePicker()
     fun showForwarding()
+    fun showKeepAlive()
     fun showAbout()
 }

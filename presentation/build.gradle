@@ -28,8 +28,8 @@ android {
         applicationId 'local.quikforward.sms'
         minSdkVersion 23
         targetSdkVersion 33
-        versionCode 2239008
-        versionName '4.3.7-forward.8'
+        versionCode 2239009
+        versionName '4.3.7-forward.9'
         setProperty("archivesBaseName", "QUIK-Forward-v${versionName}")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -78,6 +78,7 @@ android {
     }
 
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
@@ -108,6 +109,8 @@ configurations {
 }
 
 dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+    implementation 'dev.rikka.shizuku:api:13.1.5'
     // lifecycle
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"

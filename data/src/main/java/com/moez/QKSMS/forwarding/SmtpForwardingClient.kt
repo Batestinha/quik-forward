@@ -108,7 +108,16 @@ class SmtpForwardingClient @Inject constructor() {
             val label = labels.getOrNull(index)
                 ?.takeUnless { it.trim().equals(address.trim(), ignoreCase = true) }
                 .orEmpty()
-            formatParty(label, address, "Unknown")
+            if (address.isBlank() || isPhoneAddress(address)) formatParty(label, address, "Unknown")
+            else {
+                val safeAddress = sanitizeHeaderValue(address)
+                val safeLabel = sanitizeHeaderValue(label)
+                when {
+                    address.contains('@') -> if (safeLabel.isEmpty()) safeAddress else "$safeLabel ($safeAddress)"
+                    safeLabel.isEmpty() -> "$safeAddress (sender ID)"
+                    else -> "$safeLabel ($safeAddress; sender ID)"
+                }
+            }
         }.joinToString().ifBlank { "Unknown (number unavailable)" }
 
     private fun formatParty(label: String, number: String, fallbackLabel: String): String {

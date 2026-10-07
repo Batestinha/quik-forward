@@ -32,6 +32,8 @@ import javax.inject.Inject
 class ForwardingSettingsActivity : QkThemedActivity() {
 
     @Inject lateinit var forwardingManager: ForwardingManager
+    @Inject lateinit var sims: dev.octoshrimpy.quik.keepalive.KeepAliveSims
+    @Inject lateinit var simIdentities: dev.octoshrimpy.quik.forwarding.ForwardingSimIdentityStore
 
     private lateinit var enabled: SwitchCompat
     private lateinit var incomingSms: SwitchCompat
@@ -53,6 +55,7 @@ class ForwardingSettingsActivity : QkThemedActivity() {
     private var loading = false
     private var pendingContactValue: EditText? = null
     private var pendingContactLabel: String = ""
+    private val phoneNumberPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { selectSimIdentity() }
 
     private val contactPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val uri = result.data?.data ?: return@registerForActivityResult
@@ -106,6 +109,47 @@ class ForwardingSettingsActivity : QkThemedActivity() {
         findViewById<Button>(R.id.addDenyRule).setOnClickListener {
             showRuleDialog(RuleAction.DENY, null)
         }
+        findViewById<Button>(R.id.forwardingSimIdentity).setOnClickListener {
+            if (android.os.Build.VERSION.SDK_INT >= 33 &&
+                checkSelfPermission(android.Manifest.permission.READ_PHONE_NUMBERS) != android.content.pm.PackageManager.PERMISSION_GRANTED)
+                phoneNumberPermission.launch(android.Manifest.permission.READ_PHONE_NUMBERS)
+            else selectSimIdentity()
+        }
+    }
+
+    private fun selectSimIdentity() {
+        val active = sims.discover()
+        if (active.isEmpty()) {
+            AlertDialog.Builder(this).setMessage("No active SIMs are accessible. Grant phone permission and make QUIK the default SMS app.")
+                .setPositiveButton("OK", null).show()
+            return
+        }
+        AlertDialog.Builder(this).setTitle("Choose the SIM to label in emails")
+            .setItems(active.map { it.label }.toTypedArray()) { _, index -> editSimIdentity(active[index]) }.show()
+    }
+
+    private fun editSimIdentity(sim: dev.octoshrimpy.quik.keepalive.SimIdentity) {
+        val saved = simIdentities.load(sim.key)
+        val form = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 16, 32, 16) }
+        form.addView(TextView(this).apply {
+            text = "Some SIMs report a blank or placeholder phone number. Enter this SIM’s real number; it will be used as the recipient for incoming messages and sender for outgoing messages. This changes email labels only, not the SIM or carrier settings."
+        })
+        form.addView(TextView(this).apply { text = "Real SIM number (+country code); blank = automatic" })
+        val number = EditText(this).apply { inputType = InputType.TYPE_CLASS_PHONE; setText(saved.number); form.addView(this) }
+        form.addView(TextView(this).apply { text = "Display name; blank = saved contact or SIM name" })
+        val label = EditText(this).apply { inputType = InputType.TYPE_CLASS_TEXT; setText(saved.label); form.addView(this) }
+        val errors = TextView(this).also(form::addView)
+        val dialog = AlertDialog.Builder(this).setTitle(sim.label)
+            .setView(android.widget.ScrollView(this).apply { addView(form) })
+            .setPositiveButton("Save", null).setNegativeButton("Cancel", null).create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                runCatching { simIdentities.save(sim.key, number.text.toString(), label.text.toString()) }
+                    .onSuccess { dialog.dismiss(); Toast.makeText(this, "SIM identity saved for newly forwarded messages.", Toast.LENGTH_LONG).show() }
+                    .onFailure { errors.text = it.message }
+            }
+        }
+        dialog.show()
     }
 
     private fun bindViews() {

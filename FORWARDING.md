@@ -4,6 +4,8 @@ This fork is based on QUIK 4.3.7 and uses the application ID
 `local.quikforward.sms`. The Android/Kotlin namespace remains
 `dev.octoshrimpy.quik` so the fork stays maintainable against upstream.
 
+For per-SIM inactivity timers and automatic SMS, see [SIM keep-alive](SIM_KEEPALIVE.md).
+
 ## Behavior
 
 - Incoming forwarding is scheduled only after QUIK's existing sender,
@@ -20,6 +22,28 @@ This fork is based on QUIK 4.3.7 and uses the application ID
   aggregate attachment limit is 10 MB and omitted files are listed in the email.
 - Delivery uses a unique WorkManager chain, network constraints, exponential
   backoff, deterministic mail IDs, and local delivery receipts to avoid duplicates.
+
+## Sender and recipient identity
+
+Saved contacts are shown as `Name (Number)`. Alphanumeric SMS addresses such as
+`Lyca Mobile` have no phone number to recover; these are labelled `Lyca Mobile
+(sender ID)`, not `Unknown (Lyca Mobile)`. MMS email addresses are kept as addresses.
+
+For incoming messages, the recipient is the SIM identified by the message's
+subscription ID. Outgoing messages use that SIM as the sender. The app no longer
+substitutes the only currently installed SIM for an old/unknown subscription.
+Blank or obvious all-zero placeholder SIM numbers are shown as `number unavailable`.
+On Android 13+, granting phone-number access lets QUIK try the carrier, SIM and
+IMS sources in order, skipping empty/placeholder values. This can recover the
+real number when a Lyca SIM has a dummy MSISDN but IMS exposes the actual number.
+
+Use **Email forwarding → SIM phone numbers and names** to supply a SIM's real
+number (with country code) and optional display name. These overrides are bound
+to the SIM identity, not its slot. A blank name uses the saved contact name,
+then the SIM's display name. Blank fields restore automatic detection. Overrides
+affect newly captured forwarding jobs and do not change SMTP verification or
+write any number to the SIM. Verify which number belongs to each SIM before
+setting an override; QUIK cannot reliably infer a real number from a placeholder.
 
 ## Allow and deny rules
 

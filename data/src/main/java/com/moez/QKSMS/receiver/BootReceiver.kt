@@ -31,6 +31,7 @@ class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
         AndroidInjection.inject(this, context)
+        dev.octoshrimpy.quik.keepalive.KeepAliveScheduler.reconcile(context)
 
         val result = goAsync()
         updateScheduledMessageAlarms.execute(Unit) { result.finish() }

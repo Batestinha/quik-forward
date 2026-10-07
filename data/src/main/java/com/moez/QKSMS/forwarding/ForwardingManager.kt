@@ -31,6 +31,8 @@ class ForwardingManager @Inject constructor(
     private val conversationRepository: ConversationRepository,
     private val subscriptionManager: SubscriptionManagerCompat,
     private val phoneNumberUtils: PhoneNumberUtils,
+    private val sims: dev.octoshrimpy.quik.keepalive.KeepAliveSims,
+    private val simIdentities: ForwardingSimIdentityStore,
     private val secretStore: ForwardingSecretStore,
     private val smtpClient: SmtpForwardingClient,
     private val readMarker: ForwardingReadMarker
@@ -228,22 +230,27 @@ class ForwardingManager @Inject constructor(
             ?.recipients
             .orEmpty()
             .map { recipient -> recipient.address to recipient.contact?.name }
-        return resolveParticipantLabels(participants, savedContacts, phoneNumberUtils::compare)
+        return resolveParticipantLabels(participants, savedContacts, phoneNumberUtils::compare).mapIndexed { index, label ->
+            val address = participants[index]
+            if (label == address && isPhoneAddress(address)) savedContactName(address) ?: label else label
+        }
     }
 
     private fun localIdentity(message: Message): Pair<String, String> {
         val subscriptions = subscriptionManager.activeSubscriptionInfoList
         val subscription = subscriptions.firstOrNull { it.subscriptionId == message.subId }
-            ?: subscriptions.singleOrNull()
-        val number = runCatching { subscription?.number.orEmpty() }
-            .getOrDefault("")
-            .trim()
+        // An old/unknown subscription must not be attributed to whichever SIM is installed now.
+        val sim = sims.discover().singleOrNull { it.subscriptionId == message.subId }
+        val override = sim?.let { simIdentities.load(it.key) } ?: ForwardingSimIdentity()
+        val number = override.number.ifBlank {
+            sim?.number ?: usableSimNumber(runCatching { subscription?.number.orEmpty() }.getOrDefault(""))
+        }
         val savedName = savedContactName(number)
         val fallbackLabel = subscription?.displayName?.toString()
             ?.takeIf(String::isNotBlank)
             ?: subscription?.simSlotIndex?.takeIf { it >= 0 }?.let { slot -> "SIM ${slot + 1}" }
             ?: "This phone"
-        val label = (savedName ?: fallbackLabel)
+        val label = (override.label.takeIf(String::isNotBlank) ?: savedName ?: fallbackLabel)
             .replace(Regex("[\\r\\n]+"), " ")
             .trim()
             .ifBlank { "This phone" }
@@ -366,7 +373,7 @@ internal fun resolveParticipantLabels(
     addressesEqual: (String, String) -> Boolean
 ): List<String> = participants.map { address ->
     savedContacts.firstOrNull { (savedAddress) ->
-        addressesEqual(savedAddress, address) ||
+        (isPhoneAddress(savedAddress) && isPhoneAddress(address) && addressesEqual(savedAddress, address)) ||
             savedAddress.trim().equals(address.trim(), ignoreCase = true)
     }?.second
         ?.replace(Regex("[\\r\\n]+"), " ")

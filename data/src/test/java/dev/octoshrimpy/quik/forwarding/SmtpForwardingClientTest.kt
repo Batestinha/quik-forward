@@ -117,6 +117,29 @@ class SmtpForwardingClientTest {
     }
 
     @Test
+    fun identifiesAlphanumericSendersWithoutInventingANameOrNumber() {
+        val message = client.createMessage(config, job.copy(participants = listOf("Lyca Mobile"),
+            participantLabels = listOf("Lyca Mobile"), localNumber = "", localLabel = "LycaMobile"))
+        assertTrue(message.content.toString().contains("Sender: Lyca Mobile (sender ID)\n"))
+        assertTrue(message.content.toString().contains("Recipient: LycaMobile (number unavailable)\n"))
+        assertEquals("Lyca Mobile (sender ID)", (message.from.single() as InternetAddress).personal)
+    }
+
+    @Test
+    fun preservesSavedLabelsAndSanitizesAlphanumericIds() {
+        val message = client.createMessage(config, job.copy(participants = listOf("Lyca\r\nMobile"),
+            participantLabels = listOf("My\r\ncarrier")))
+        assertTrue(message.content.toString().contains("Sender: My carrier (Lyca Mobile; sender ID)\n"))
+    }
+
+    @Test
+    fun emailParticipantsAreNotMisrepresentedAsPhoneNumbers() {
+        val message = client.createMessage(config, job.copy(kind = ForwardingMessageKind.MMS,
+            participants = listOf("alice@example.com")))
+        assertTrue(message.content.toString().contains("Sender: alice@example.com\n"))
+    }
+
+    @Test
     fun createsSmtpTransportWithoutProviderDiscovery() {
         val transport = client.createTransport(
             config.copy(

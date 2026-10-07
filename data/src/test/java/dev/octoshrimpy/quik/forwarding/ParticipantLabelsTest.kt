@@ -35,6 +35,15 @@ class ParticipantLabelsTest {
     }
 
     @Test
+    fun alphanumericSenderIdsNeverUseNumericContactMatching() {
+        val labels = resolveParticipantLabels(listOf("Lyca Mobile"),
+            listOf("12345" to "Unrelated contact", "lyca mobile" to "My carrier")) { _, _ ->
+            throw AssertionError("Phone comparison must not be called for sender IDs")
+        }
+        assertEquals(listOf("My carrier"), labels)
+    }
+
+    @Test
     fun readsQueuedJobsCreatedBeforeContactLabelsWereAdded() {
         val adapter = Moshi.Builder()
             .add(KotlinJsonAdapterFactory())

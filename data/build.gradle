@@ -23,7 +23,10 @@ apply plugin: 'kotlin-kapt'
 android {
     compileSdk 34
 
+    buildFeatures { aidl true }
+
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
@@ -38,6 +41,9 @@ android {
 }
 
 dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+    implementation 'dev.rikka.shizuku:api:13.1.5'
+    implementation 'dev.rikka.shizuku:provider:13.1.5'
 
     // androidx
     implementation "androidx.appcompat:appcompat:$androidx_appcompat_version"

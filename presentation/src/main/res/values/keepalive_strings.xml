@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="keepalive_title">SIM keep-alive</string>
+    <string name="keepalive_summary">Send a periodic SMS when a SIM has been inactive</string>
+</resources>

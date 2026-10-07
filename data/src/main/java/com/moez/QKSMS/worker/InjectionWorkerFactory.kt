@@ -56,6 +56,7 @@ class InjectionWorkerFactory @Inject constructor(
     private val forwardingManager: ForwardingManager,
     private val forwardingReconciler: ForwardingReconciler,
     private val forwardingScheduler: ForwardingScheduler,
+    private val keepAliveManager: dev.octoshrimpy.quik.keepalive.KeepAliveManager,
 
 ) : WorkerFactory() {
     override fun createWorker(
@@ -70,6 +71,7 @@ class InjectionWorkerFactory @Inject constructor(
             .newInstance(appContext, workerParameters)
 
         when (instance) {
+            is KeepAliveWorker -> instance.manager = keepAliveManager
             is HousekeepingWorker ->
                 instance.scheduledMessageRepository = scheduledMessageRepository
             is ReceiveSmsWorker -> {

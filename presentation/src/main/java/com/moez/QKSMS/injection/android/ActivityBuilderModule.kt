@@ -102,6 +102,10 @@ abstract class ActivityBuilderModule {
 
     @ActivityScope
     @ContributesAndroidInjector(modules = [])
+    abstract fun bindKeepAliveSettingsActivity(): dev.octoshrimpy.quik.feature.keepalive.KeepAliveSettingsActivity
+
+    @ActivityScope
+    @ContributesAndroidInjector(modules = [])
     abstract fun bindAboutActivity(): AboutActivity
 
     @ActivityScope

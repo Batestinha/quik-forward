@@ -42,6 +42,7 @@ class SmsProviderChangedReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         AndroidInjection.inject(this, context)
+        dev.octoshrimpy.quik.keepalive.KeepAliveScheduler.reconcile(context)
 
         // Sync the message to our realm
         val pendingResult = goAsync()

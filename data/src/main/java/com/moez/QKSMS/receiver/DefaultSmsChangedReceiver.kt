@@ -38,6 +38,7 @@ class DefaultSmsChangedReceiver : BroadcastReceiver() {
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onReceive(context: Context, intent: Intent) {
         AndroidInjection.inject(this, context)
+        dev.octoshrimpy.quik.keepalive.KeepAliveScheduler.reconcile(context)
 
         if (intent.getBooleanExtra(Telephony.Sms.Intents.EXTRA_IS_DEFAULT_SMS_APP, false)) {
             val pendingResult = goAsync()

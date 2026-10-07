@@ -1,5 +1,11 @@
 -dontobfuscate
 
+# Persistent JSON models and the Shizuku service are constructed reflectively.
+-keep class dev.octoshrimpy.quik.keepalive.KeepAliveRule { *; }
+-keep class dev.octoshrimpy.quik.keepalive.KeepAliveAttempt { *; }
+-keep class dev.octoshrimpy.quik.keepalive.KeepAliveCallService { *; }
+-keep class dev.octoshrimpy.quik.keepalive.IKeepAliveCallService$* { *; }
+
 # android-smsmms
 # -keep class android.net.** { *; }
 -dontwarn android.net.ConnectivityManager

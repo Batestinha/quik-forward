@@ -20,6 +20,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Shizuku API 13.1 supports API 23 with core-library desugaring (enabled in Gradle). -->
+    <uses-sdk tools:overrideLibrary="rikka.shizuku.api" />
+
     <uses-feature
         android:name="android.hardware.telephony"
         android:required="false" />
@@ -31,8 +34,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.RECEIVE_MMS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
@@ -106,6 +111,8 @@
         </activity>
         <activity android:name=".feature.messageutils.MessageUtilsActivity" />
         <activity android:name=".feature.settings.SettingsActivity" />
+        <activity android:name=".feature.keepalive.KeepAliveSettingsActivity"
+            android:exported="false" android:parentActivityName=".feature.settings.SettingsActivity" />
         <activity
             android:name=".feature.forwarding.ForwardingSettingsActivity"
             android:parentActivityName=".feature.settings.SettingsActivity" />
@@ -162,6 +169,16 @@
             android:name=".receiver.MmsReceivedReceiver"
             android:taskAffinity="com.klinker.android.messaging.MMS_RECEIVED" />
         <receiver android:name=".receiver.MessageSentReceiver" />
+        <receiver android:name=".receiver.KeepAliveSentReceiver" android:exported="false" />
+        <receiver android:name=".receiver.KeepAliveSignalReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PHONE_STATE" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.telephony.action.CARRIER_CONFIG_CHANGED" />
+            </intent-filter>
+        </receiver>
         <receiver android:name=".receiver.MessageDeliveredReceiver" />
         <receiver android:name=".receiver.SendScheduledMessageReceiver" />
         <receiver android:name=".receiver.SendDelayedMessageReceiver" />
@@ -247,6 +264,10 @@
         </service>
 
         <!-- remove default workmanager init so custom injection capable instance can be used -->
+        <provider android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku" android:multiprocess="false"
+            android:enabled="true" android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

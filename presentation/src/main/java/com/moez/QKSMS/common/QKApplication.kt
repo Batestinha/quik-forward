@@ -133,6 +133,8 @@ class QKApplication : Application(), HasActivityInjector, HasBroadcastReceiverIn
 
         // Recover incoming messages whose delivery broadcast was missed while QUIK was unavailable.
         ReconcileForwardingWorker.register(applicationContext)
+        dev.octoshrimpy.quik.keepalive.KeepAliveScheduler.reconcile(applicationContext)
+        dev.octoshrimpy.quik.keepalive.KeepAliveObservers.start(applicationContext)
     }
 
     override fun activityInjector(): AndroidInjector<Activity> {
