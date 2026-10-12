@@ -21,6 +21,10 @@ apply plugin: 'realm-android' // Realm needs to be before Kotlin or the build wi
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 
+// Build on a hosted runner, then sign locally without uploading the release key.
+def unsignedReleaseBuild = providers.gradleProperty('unsignedRelease')
+        .map { it.toBoolean() }.getOrElse(false)
+
 android {
     compileSdk 34
 
@@ -61,7 +65,9 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            if (!unsignedReleaseBuild) {
+                signingConfig signingConfigs.release
+            }
         }
         debug {
             versionNameSuffix "-debug"
@@ -213,7 +219,8 @@ dependencies {
 }
 // Check to make sure that the keystore file is present when building a release
 gradle.taskGraph.whenReady { taskGraph ->
-    if ((taskGraph.hasTask(':assembleRelease') ||
+    if (!unsignedReleaseBuild &&
+            (taskGraph.hasTask(':assembleRelease') ||
             taskGraph.allTasks.any { it.name == 'assembleRelease' }) &&
             !android.signingConfigs.release.storeFile.exists()) {
         throw new GradleException("Release keystore not found. See .secrets/README.txt")

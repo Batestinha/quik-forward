@@ -82,3 +82,9 @@ ignored by Git and must be backed up together in a secure offline location:
 Do not regenerate or lose this key: Android will only accept application updates
 signed by the same certificate. CI can instead provide `QUIK_RELEASE_KEYSTORE`,
 `QUIK_RELEASE_KEY_ALIAS`, and `QUIK_RELEASE_PASSWORD` environment variables.
+
+For a build machine without the release key, run
+`./gradlew :presentation:assembleRelease -PunsignedRelease=true`. This produces
+an unsigned optimized APK; sign it locally with the existing release key and
+verify the certificate before publishing it. Ordinary release builds still
+require the configured signing key.
