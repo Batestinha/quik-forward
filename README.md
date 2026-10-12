@@ -2,6 +2,8 @@
 
 # QUIK
 
+This is the QUIK Forward fork. [Download its signed APK](https://github.com/Batestinha/quik-forward/releases/latest).
+
 [![Manual Release](https://github.com/octoshrimpy/quik/actions/workflows/manual-release.yml/badge.svg)](https://github.com/octoshrimpy/quik/actions/workflows/manual-release.yml)
 <a href="https://hosted.weblate.org/engage/quik/"><img src="https://hosted.weblate.org/widget/quik/svg-badge.svg" alt="Translation status" /></a>
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/octoshrimpy/quik)
